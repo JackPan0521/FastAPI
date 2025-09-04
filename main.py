@@ -3,10 +3,6 @@ import math
 from scipy.optimize import milp, LinearConstraint, Bounds
 from firebase import get_base_cost_from_firebase, db
 from fine_tuningAPI import intelligent_task_analysis
-from user_input import get_user_input
-
-Ts,Te,duration,date_str,desc_list =get_user_input()
-
 
 def write_results_to_firebase(date_str, schedule_results):
     year, month, day = date_str.split("-")
@@ -21,6 +17,7 @@ def write_results_to_firebase(date_str, schedule_results):
             print(f"❌ 寫入任務 {idx} 發生錯誤:", e)
 
 def schedule_tasks(Ts, Te, durations, date_str, desc_list):
+    """接收參數並執行任務排程運算"""
     slots_per_hour = 12
     Ts_slots = int(Ts * slots_per_hour)
     Te_slots = int(Te * slots_per_hour)
@@ -33,7 +30,6 @@ def schedule_tasks(Ts, Te, durations, date_str, desc_list):
     base_cost = get_base_cost_from_firebase(intelligent_analysis_results)#把分類完的陣列輸入去firebase去抓對應的疲勞度
     #目前不確定抓回來的樣子會長怎樣
     extended_cost = np.repeat(base_cost, slots_per_hour, axis=1)[:, :total_slots]
-
 
     if n > base_cost.shape[0]:
         repeat_times = math.ceil(n / base_cost.shape[0])
@@ -119,5 +115,7 @@ def schedule_tasks(Ts, Te, durations, date_str, desc_list):
 
         print("\n💰 最小總成本:", np.dot(c, res.x))
         write_results_to_firebase(date_str, scheduled_tasks)#最後寫入應多加智能種類需要測試
+        return scheduled_tasks
     else:
         print("\n❌ 找不到可行解。")
+        return None

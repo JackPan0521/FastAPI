@@ -1,4 +1,4 @@
-import json
+"""import json
 from google.oauth2 import service_account
 from google import genai
 
@@ -41,3 +41,4 @@ if __name__ == "__main__":
             break
         reply = chat_with_ai(client, msg)
         print("AI:", reply)
+"""
