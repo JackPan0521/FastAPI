@@ -4,7 +4,8 @@ from datetime import datetime
 
 def get_user_input():
     try:
-        url = " https://d1d0d33c028e.ngrok-free.app/api/latest"
+        url = " https://f8e827554f9d.ngrok-free.app/api/latest"
+        
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
