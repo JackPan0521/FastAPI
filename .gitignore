@@ -165,6 +165,11 @@ Thumbs.db
 task-focus-4i2ic-*.json
 serviceAccountKey.json
 firebase-config.json
+my-key.json
+google-credentials.json
+gcp-*.json
+*-credentials.json
+*-service-account.json
 
 # API keys and secrets
 .env
