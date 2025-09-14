@@ -253,3 +253,18 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+# Google Cloud SDK (應該通過官方渠道安裝，不應版本控制)
+gcloud*/
+exec*/
+google-cloud-sdk/
+.gcloud/
+.gsutil/
+
+# Google Cloud 相關二進制文件和配置
+gcloud
+gsutil
+bq
+
+# Google Cloud 本地配置
+.config/gcloud/
