@@ -3,7 +3,7 @@ import math
 
 def get_plan_input():
     try:
-        url = "https://f8e827554f9d.ngrok-free.app/dick/submit"  # 🚨 換成你的新 API
+        url = "https://1b39113ffc61.ngrok-free.app/dick/submit"  # 🚨 換成你的新 API
         response = requests.get(url, timeout=5)
         response.raise_for_status()
         print("✅ API 請求成功，HTTP 狀態碼:", response.status_code)

@@ -5,16 +5,16 @@ from vertexai.preview.generative_models import GenerativeModel
 from google.oauth2 import service_account
 
 # ====== 初始化 Vertex AI ======
-def init_vertex_ai_client(project_id: str, location: str, key_path: str = "my-key.json"):
+def init_vertex_ai_client(project_id: str, location: str, key_path: str = "task-focus-4i2ic-3d473316080f.json"):
     credentials = None
     if os.path.exists(key_path):
         try:
             credentials = service_account.Credentials.from_service_account_file(key_path)
-            print("✅ 已載入 my-key.json 認證")
+            print("✅ 已載入 task-focus-4i2ic-3d473316080f.json 認證")
         except Exception as e:
             print(f"⚠️ 載入金鑰失敗，將使用 ADC: {e}")
     else:
-        print("⚠️ 未找到 my-key.json，將使用 ADC")
+        print("⚠️ 未找到 task-focus-4i2ic-3d473316080f.json，將使用 ADC")
 
     try:
         vertexai.init(project=project_id, location=location, credentials=credentials)

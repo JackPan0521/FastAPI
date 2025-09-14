@@ -1,8 +1,10 @@
 import numpy as np
 import math
 from scipy.optimize import milp, LinearConstraint, Bounds
-from firebase import get_base_cost_from_firebase, db
+from recommend_firebase import get_base_cost_from_firebase_new, db
 import json
+import recommend_user_input
+
 
 def write_results_to_firebase(date_str, schedule_results):
     year, month, day = date_str.split("-")
@@ -86,20 +88,12 @@ def schedule_plan_tasks(plan_json):
         n = len(durations)
         print(f"⏱ 共有 {n} 個任務需要排程")
 
-        # === 計算全域時間範圍 ===
-        all_start_times = [tw[0] for tw in time_windows]
-        all_end_times = [tw[1] for tw in time_windows]
-        global_start = min(all_start_times)
-        global_end = max(all_end_times)
-        
-        print(f"🕒 全域時間範圍: {global_start:.2f} ~ {global_end:.2f} 小時")
-
-        # === 獲取成本矩陣 ===
+        # === 不再計算全域時間範圍（每個任務用自己的時間窗口）===
         slots_per_hour = 12
         total_slots = 24 * slots_per_hour
-        
+
         try:
-            base_cost = get_base_cost_from_firebase(intelligence_list)
+            base_cost = get_base_cost_from_firebase_new(intelligence_list)  # e.g. ['fatigue_intrapersonal', ...]
             print(f"✅ 成功獲取成本矩陣，形狀: {base_cost.shape}")
         except Exception as cost_error:
             print(f"⚠️ 獲取成本矩陣失敗: {cost_error}，使用預設成本")
@@ -113,30 +107,24 @@ def schedule_plan_tasks(plan_json):
         else:
             C = extended_cost[:n, :]
 
-        # === MILP 設定 ===
-        global_start_slots = int(global_start * slots_per_hour)
-        global_end_slots = int(global_end * slots_per_hour)
-        max_time_slots = global_end_slots - global_start_slots + 1
-        
-        print(f"🔍 全域槽位範圍: {global_start_slots} ~ {global_end_slots} (共 {max_time_slots} 槽)")
-
-        # 為每個任務創建變數
+        # === MILP 設定：為每個任務只在自己的時間窗口建立變數 ===
         num_vars = 0
         task_var_ranges = []
-        
+
         for i in range(n):
             task_start_slots = int(time_windows[i][0] * slots_per_hour)
-            task_end_slots = int(time_windows[i][1] * slots_per_hour)
-            task_time_slots = task_end_slots - task_start_slots + 1 - durations[i] + 1
-            
+            task_end_slots   = int(time_windows[i][1] * slots_per_hour)
+
+            # 在窗口內可放置的「開始位置」數量 = 可用槽數 - 任務長度 + 1
+            task_time_slots = (task_end_slots - task_start_slots + 1) - durations[i] + 1
+
             if task_time_slots <= 0:
-                print(f"❌ 任務 {i} 的時間窗口太小，無法容納任務")
+                print(f"❌ 任務 {i} 時間窗口不足: 需要 {durations[i]} 槽")
                 return {"success": False, "message": f"任務 {i} 時間窗口不足"}
-            
+
             task_var_ranges.append((num_vars, num_vars + task_time_slots))
+            print(f"🔍 任務 {i} 變數範圍: {task_var_ranges[-1][0]}-{task_var_ranges[-1][1]-1} (共 {task_time_slots} 個變數)")
             num_vars += task_time_slots
-            
-            print(f"🔍 任務 {i} 變數範圍: {task_var_ranges[i][0]}-{task_var_ranges[i][1]-1} (共 {task_time_slots} 個)")
 
         bounds = Bounds([0] * num_vars, [1] * num_vars)
         integrality = np.ones(num_vars, dtype=bool)

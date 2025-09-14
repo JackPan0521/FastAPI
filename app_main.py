@@ -106,8 +106,6 @@ def ask_api(req: AskRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-# ...existing code...
-
 class Task(BaseModel):
     事件: str
     年分: int
@@ -143,56 +141,35 @@ def calculate_duration(start_time: str, end_time: str) -> int:
         logging.error(f"❌ 計算持續時間錯誤: {e}")
         return 60  # 預設 60 分鐘
 
-# ...existing code...
-
 @app.post("/dick/submit")
 async def submit_plan(plan: SubmitPlan):
     try:
         logging.info(f"✅ 收到使用者勾選行程: {plan.dict()}")
 
-        # 處理每個任務，確保有持續時間
         processed_tasks = []
         for task in plan.已選行程:
             task_dict = task.dict()
-            
-            # 檢查是否已有持續時間
-            if task_dict.get('持續時間') is not None:
-                # 如果 JSON 中有提供持續時間，使用提供的值
-                logging.info(f"🔍 使用 JSON 提供的 '{task_dict['事件']}' 持續時間: {task_dict['持續時間']} 分鐘")
-                provided_duration = task_dict['持續時間']
-            else:
-                # 如果沒有提供持續時間，則自動計算
+
+            # 如果前端有提供「持續時間」，直接使用；沒有就用開始/結束計算一次
+            if task_dict.get('持續時間') is None:
                 calculated_duration = calculate_duration(
-                    task_dict['開始時間'], 
+                    task_dict['開始時間'],
                     task_dict['結束時間']
                 )
                 task_dict['持續時間'] = calculated_duration
-                provided_duration = calculated_duration
                 logging.info(f"🔍 自動計算 '{task_dict['事件']}' 持續時間: {calculated_duration} 分鐘")
-            
-            # 驗證持續時間的合理性（可選）
-            calculated_duration = calculate_duration(
-                task_dict['開始時間'], 
-                task_dict['結束時間']
-            )
-            
-            if task_dict.get('持續時間') != calculated_duration:
-                logging.info(f"⚠️ '{task_dict['事件']}' 提供的持續時間 ({task_dict['持續時間']}分) 與計算的持續時間 ({calculated_duration}分) 不一致")
-                # 您可以選擇使用提供的值或計算的值，這裡使用提供的值
-                logging.info(f"📌 使用 JSON 提供的持續時間: {task_dict['持續時間']} 分鐘")
-            
+            else:
+                # 不再對比或覆蓋，完全信任前端數值
+                logging.info(f"🔍 使用 JSON 提供的 '{task_dict['事件']}' 持續時間: {task_dict['持續時間']} 分鐘")
+
             processed_tasks.append(task_dict)
 
-        # 保存處理後的任務
         saved_tasks.extend(processed_tasks)
 
-        # === 自動排程部分 ===
         plan_dict = plan.dict()
-        # 更新計畫中的任務為處理後的版本
         plan_dict['已選行程'] = processed_tasks
-        
         logging.info(f"🔍 準備送入排程的資料: {plan_dict}")
-        
+
         try:
             schedule_result = schedule_plan_tasks(plan_dict)
             logging.info(f"✅ 排程結果: {schedule_result}")
@@ -212,8 +189,6 @@ async def submit_plan(plan: SubmitPlan):
         logging.error(f"❌ 儲存或排程行程錯誤: {e}")
         raise HTTPException(status_code=500, detail=f"儲存或排程行程失敗: {str(e)}")
 
-# ...existing code...
-
 @app.get("/dick/submit")
 async def get_saved_tasks():
     try:
@@ -226,5 +201,3 @@ async def get_saved_tasks():
     except Exception as e:
         logging.error(f"❌ 獲取行程錯誤: {e}")
         raise HTTPException(status_code=500, detail=f"獲取行程失敗: {str(e)}")
-
-# ...existing code...
