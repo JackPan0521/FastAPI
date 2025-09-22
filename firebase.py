@@ -72,3 +72,32 @@ def get_base_cost_from_firebase(analysis_results: list):
         raise ValueError("❌ 未能從 Firebase 獲取任何成本資料")
 
     return np.array(costs)
+
+def get_all_schedule(date_str: str, uid: str):
+    """抓取指定日期的所有行程，回傳包含 'startTime' 和 'endTime' 的 dict 列表。"""
+    schedules = []
+    year, month, day = date_str.split("-")
+    # /Tasks/4nL0BBGLWWfyZhWBuhYGvlXSkw33/task_list/2025-09-17/tasks/0
+    tasks_ref = db.collection("Tasks").document(uid) \
+                    .collection("task_list").document(date_str) \
+                    .collection("tasks")
+    print("firebase test0:", tasks_ref)
+    docs = tasks_ref.stream()
+    print("firebase test:", docs)
+    for doc in docs:
+        data = doc.to_dict()
+        # 保守處理，若缺少 startTime/endTime 就跳過
+        
+        if 'startTime' not in data or 'endTime' not in data:
+            continue
+        schedules.append({
+            'desc': data.get('desc'),
+            'startTime': data.get('startTime'),
+            'endTime': data.get('endTime'),
+            'intelligence': data.get('intelligence'),
+            'index': data.get('index')
+            
+        })
+        # doc.reference.delete()  # 刪除該行程文件
+    return schedules
+

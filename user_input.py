@@ -30,9 +30,11 @@ def get_user_input():
 
         desc_list = data.get("desc", [""] * len(durations))  
 
-        return Ts, Te, durations, date_str, desc_list
+        uid = data.get("uid", "testUser")
+
+        return Ts, Te, durations, date_str, desc_list, uid
 
     except Exception as e:
         print("❌ 取得或解析 API 資料失敗：", e)
-        return None, None, None, None, None
+        return None, None, None, None, None, None
 
